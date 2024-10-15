@@ -1,5 +1,5 @@
 {
-    "name": "de5car7es/dropbox-php-sdk",,
+    "name": "de5car7es/dropbox-php-sdk",
     "description": "Dropbox PHP API V2 SDK (Unofficial) with support for Dropbox refresh tokens",
     "keywords" : ["dropbox", "sdk", "api", "client", "php", "unofficial"],
     "license": "MIT",
