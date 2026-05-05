@@ -6,6 +6,7 @@ use Kunnu\Dropbox\Models\DeletedMetadata;
 use Kunnu\Dropbox\Models\File;
 use Kunnu\Dropbox\Models\Account;
 use Kunnu\Dropbox\Models\Thumbnail;
+use Kunnu\Dropbox\Models\ThumbnailBatchResult;
 use Kunnu\Dropbox\Models\AccountList;
 use Kunnu\Dropbox\Models\ModelFactory;
 use Kunnu\Dropbox\Models\FileMetadata;
@@ -1109,6 +1110,64 @@ class Dropbox
 
         //Make and return a Thumbnail model
         return new Thumbnail($metadata, $contents);
+    }
+
+    /**
+     * Get thumbnails for a list of images.
+     *
+     * We allow up to 25 thumbnails in a single batch.
+     * This method currently supports files with the following file extensions:
+     * jpg, jpeg, png, tiff, tif, gif, webp, ppm and bmp.
+     * Photos that are larger than 20MB in size won't be converted to a thumbnail.
+     *
+     * @param array  $entries List of paths or ThumbnailArg arrays.
+     *                        ThumbnailArg can have: path, format, size, mode, quality.
+     *                        If only path is provided, default values are used.
+     *
+     * @return \Kunnu\Dropbox\Models\ThumbnailBatchResult
+     *
+     * @throws \Kunnu\Dropbox\Exceptions\DropboxClientException
+     *
+     * @link https://www.dropbox.com/developers/documentation/http/documentation#files-get_thumbnail_batch
+     *
+     */
+    public function getThumbnailBatch(array $entries)
+    {
+        // Limit of 25 files
+        if (count($entries) > 25) {
+            throw new DropboxClientException("The operation involves more than 25 files. Limit is 25.");
+        }
+
+        $processedEntries = [];
+
+        foreach ($entries as $entry) {
+            if (is_string($entry)) {
+                $processedEntries[] = [
+                    'path' => $entry,
+                    'format' => 'jpeg',
+                    'size' => 'w64h64',
+                    'mode' => 'strict'
+                ];
+            } elseif (is_array($entry)) {
+                if (!isset($entry['path'])) {
+                    throw new DropboxClientException("Path is required for each thumbnail entry.");
+                }
+
+                $processedEntries[] = [
+                    'path' => $entry['path'],
+                    'format' => isset($entry['format']) ? $entry['format'] : 'jpeg',
+                    'size' => $this->getThumbnailSize(isset($entry['size']) ? $entry['size'] : 'small'),
+                    'mode' => isset($entry['mode']) ? $entry['mode'] : 'strict'
+                ];
+            }
+        }
+
+        // Get Thumbnail Batch
+        $response = $this->postToContent('/files/get_thumbnail_batch', ['entries' => $processedEntries]);
+        $body = $response->getDecodedBody();
+
+        // Make and return a ThumbnailBatchResult model
+        return new ThumbnailBatchResult($body);
     }
 
     /**

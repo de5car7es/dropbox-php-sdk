@@ -43,6 +43,11 @@ class ModelFactory
             return new SearchResults($data);
         }
 
+        //Thumbnail Batch Result
+        if (static::isThumbnailBatchResult($data)) {
+            return new ThumbnailBatchResult($data);
+        }
+
         //Deleted File/Folder
         if (static::isDeletedFileOrFolder($data)) {
             return new DeletedMetadata($data);
@@ -110,6 +115,16 @@ class ModelFactory
     protected static function isSearchResult(array $data)
     {
         return isset($data['matches']);
+    }
+
+    /**
+     * @param array $data
+     *
+     * @return bool
+     */
+    protected static function isThumbnailBatchResult(array $data)
+    {
+        return isset($data['entries']) && !empty($data['entries']) && (isset($data['entries'][0]['.tag']) && ($data['entries'][0]['.tag'] === 'success' || isset($data['entries'][0]['failure'])));
     }
 
     /**
