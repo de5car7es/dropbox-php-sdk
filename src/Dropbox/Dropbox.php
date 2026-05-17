@@ -1084,7 +1084,7 @@ class Dropbox
      * @link https://www.dropbox.com/developers/documentation/http/documentation#files-get_thumbnail
      *
      */
-    public function getThumbnail($path, $size = 'small', $format = 'jpeg')
+    public function getThumbnail($path, $size = 'small', $format = 'jpeg', $mode = "bestfit")
     {
         //Path cannot be null
         if (is_null($path)) {
@@ -1100,7 +1100,7 @@ class Dropbox
         $size = $this->getThumbnailSize($size);
 
         //Get Thumbnail
-        $response = $this->postToContent('/files/get_thumbnail', ['path' => $path, 'format' => $format, 'size' => $size]);
+        $response = $this->postToContent('/files/get_thumbnail', ['path' => $path, 'format' => $format, 'size' => $size, 'mode' => $mode]);;
 
         //Get file metadata from response headers
         $metadata = $this->getMetadataFromResponseHeaders($response);
